@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SIZE 10
+#define SIZE 100
 #define MASTER 0
 #define FROM_MASTER 1
 #define FROM_WORKER 2
