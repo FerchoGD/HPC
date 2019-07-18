@@ -66,7 +66,7 @@ void simulationonhost(int *A,int size,int iter){
     
 }
 
-/*
+
 __global__ void simulationongpu(int *A,const int size, int iter){
     int i= threadIdx.x;
     if(i<iter) {
@@ -119,11 +119,12 @@ __global__ void simulationongpu(int *A,const int size, int iter){
     
     }
 }
-*/
+
 
 int main(){
     srand(time(NULL));
     int tam=10;
+    //Host Memory
     int *vehiculos = new int[tam];
     int simulations=1000000;
 
@@ -138,14 +139,39 @@ int main(){
     ofstream archivo("resultados.txt");
 
     //Configurando CUDA
+    int dev = 0;
+    CHECK(cudaSetDevice(dev));
+
+    size_t nBytes = tam *sizeof(int);
+
+    int *gpuref=(int *)malloc(nBytes);
+    int *d_A=(int *)malloc(nBytes);
+
+    memset(gpuref,0,nBytes);
+
+    //Malloc for GPU
+
+    CHECK(cudaMalloc((int**)&vehiculos, nBytes));
+    CHECK(cudaMalloc((int**)&gpuref, nBytes));
+
+    //Transfer Data From Host to Device
+    CHECK(cudaMemcpy(d_A,vehiculos, nBytes, cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(d_A, gpuRef, nBytes, cudaMemcpyHostToDevice));
+
+    dim3 block (tam);
+    dim3 grid (1);
+
+    simulationongpu<<grid,block>>(d_A,tam,simulaciones);
+
+    //Copy Device To Host
+
+    CHECK(cudaMemcpy(gpuref,d_A,nBytes,cudaMemcpyDeviceToHost));
+
+    //Free
+
+    CHECK(cudaFree(d_A));
 
     
-
-
-
-
-
-
 
 
     //Simulación en Secuencial
@@ -155,20 +181,25 @@ int main(){
     simulationonhost(vehiculos,tam,simulations);
     t1=clock();
 
-    double time = (double(t1-t0)/CLOCKS_PER_SEC);;
+    double time = (double(t1-t0)/CLOCKS_PER_SEC);
     archivo<<time<<"-"<<tam<<"-"<<simulations<<"\n";
 
     //Simulación en Paralelo
     /*
-    start= omp_get_wtime();
+    unsigned start,finish;
+    start= clock();
     simulationongpu(vehiculos,tam,simulations);
-    finish = omp_get_wtime();
-    time = finish - start;
+    finish = clock();
+    time = (double(t1-t0)/CLOCKS_PER_SEC);
     fs<<"Cuda: "<<tiempo<<"-"<<tam<<"-"<<simulations<<"\n";
     */
 
 
 
     archivo.close();
+    //Free Host
     delete vehiculos;
+
+    CHECK(cudaDeviceReset());
+    return 0;
 }
