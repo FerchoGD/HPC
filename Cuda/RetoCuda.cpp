@@ -1,10 +1,9 @@
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
-#include <time.h>
-#include "../common/common.h"
-#include <cuda_runtime.h>
-#include <fstream.h>
+#include <ctime>
+//#include <cuda_runtime.h>
+#include <fstream>
 #include <omp.h>
 
 using namespace std;
@@ -32,18 +31,15 @@ void simulationonhost(int *A,int size,int iter){
                 if(A[i+1]==0){
                     new_traffic[i]=0;
                     new_traffic[i+1]=1;
-                    cout<<"Hola ";
                     i++;
                     if(i>=size-1)change_ult=true;                
                 }
                 else{
                 new_traffic[i]=A[i];
-                cout<<" Da igual ";
                 }
             }
             else{
                 new_traffic[i]=A[i];
-                cout<<" Da igual ";
                 }
              
             
@@ -53,12 +49,10 @@ void simulationonhost(int *A,int size,int iter){
         if(A[0]==0 && A[size-1]==1){
             new_traffic[0]=1;
             new_traffic[size-1]=0;
-            cout<<" Hola ult ";
             change_ult=true;
         }
         if(!change_ult){
             new_traffic[size-1]=A[size-1];
-            cout<<"Da igual ult ";
         }        
         cout<<"Iteración #"<<iteraciones<<" : "<<endl;
         for(int j=0;j<size;j++){
@@ -72,6 +66,7 @@ void simulationonhost(int *A,int size,int iter){
     
 }
 
+/*
 __global__ void simulationongpu(int *A,const int size, int iter){
     int i= threadIdx.x;
     if(i<iter) {
@@ -124,12 +119,16 @@ __global__ void simulationongpu(int *A,const int size, int iter){
     
     }
 }
+*/
 
 int main(){
     srand(time(NULL));
     int tam=10;
     int *vehiculos = new int[tam];
-    int simulations=5;
+    int simulations=1000000;
+
+
+    //Vamos a iterar sobre las simulaciones y tamano
     generatedata(vehiculos,tam);
     cout<<"Inicial : ";
     for(int ind=0; ind<tam; ind++){
@@ -151,18 +150,22 @@ int main(){
 
     //Simulación en Secuencial
     cout<<"Simulating Traffic: "<<endl;
-    double start = omp_get_wtime();
+    unsigned t0,t1;
+    t0=clock();
     simulationonhost(vehiculos,tam,simulations);
-    double finish = omp_get_wtime( );
-    double time = finish - start;
-    fs<<time<<"-"<<tam<<"-"<<simulations<<"\n";
+    t1=clock();
+
+    double time = (double(t1-t0)/CLOCKS_PER_SEC);;
+    archivo<<time<<"-"<<tam<<"-"<<simulations<<"\n";
 
     //Simulación en Paralelo
+    /*
     start= omp_get_wtime();
     simulationongpu(vehiculos,tam,simulations);
     finish = omp_get_wtime();
     time = finish - start;
     fs<<"Cuda: "<<tiempo<<"-"<<tam<<"-"<<simulations<<"\n";
+    */
 
 
 
