@@ -2,9 +2,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include <ctime>
-//#include <cuda_runtime.h>
+#include <cuda_runtime.h>
 #include <fstream>
-#include <omp.h>
+#include <stdio.h>
 
 using namespace std;
 
@@ -161,7 +161,7 @@ int main(){
     dim3 block (tam);
     dim3 grid (1);
 
-    simulationongpu<<grid,block>>(d_A,tam,simulaciones);
+    simulationongpu<<grid,block>>(d_A,tam,simulations);
 
     //Copy Device To Host
 
