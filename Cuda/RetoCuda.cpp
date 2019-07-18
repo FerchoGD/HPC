@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <ctime>
-#include <cuda_runtime.h>
+//#include <cuda_runtime.h>
 #include <fstream>
 #include <stdio.h>
 
@@ -54,12 +54,12 @@ void simulationonhost(int *A,int size,int iter){
         if(!change_ult){
             new_traffic[size-1]=A[size-1];
         }        
-        cout<<"Iteración #"<<iteraciones<<" : "<<endl;
+        //cout<<"Iteración #"<<iteraciones<<" : "<<endl;
         for(int j=0;j<size;j++){
             A[j]=new_traffic[j];
-            cout<<A[j]<<" ";
+            //cout<<A[j]<<" ";
         }
-        cout<<endl;
+        //cout<<endl;
         iteraciones++;
         delete new_traffic;
     }
@@ -67,7 +67,7 @@ void simulationonhost(int *A,int size,int iter){
 }
 
 
-__global__ void simulationongpu(int *A,const int size, int iter){
+/*__global__ void simulationongpu(int *A,const int size, int iter){
     int i= threadIdx.x;
     if(i<iter) {
         int iteraciones=0;
@@ -119,26 +119,27 @@ __global__ void simulationongpu(int *A,const int size, int iter){
     
     }
 }
+*/
 
 
 int main(){
     srand(time(NULL));
     int tam=10;
     //Host Memory
-    int *vehiculos = new int[tam];
+    
     int simulations=1000000;
 
 
-    //Vamos a iterar sobre las simulaciones y tamano
-    generatedata(vehiculos,tam);
-    cout<<"Inicial : ";
+    
+    /*cout<<"Inicial : ";
     for(int ind=0; ind<tam; ind++){
         cout<<vehiculos[ind]<<" ";
     }
-    cout<<endl;
+    cout<<endl;*/
     ofstream archivo("resultados.txt");
 
     //Configurando CUDA
+    /*
     int dev = 0;
     CHECK(cudaSetDevice(dev));
 
@@ -170,19 +171,35 @@ int main(){
     //Free
 
     CHECK(cudaFree(d_A));
-
+*/
     
 
 
     //Simulación en Secuencial
     cout<<"Simulating Traffic: "<<endl;
-    unsigned t0,t1;
-    t0=clock();
-    simulationonhost(vehiculos,tam,simulations);
-    t1=clock();
+    int checksimul=0,checktam=2;
 
-    double time = (double(t1-t0)/CLOCKS_PER_SEC);
-    archivo<<time<<"-"<<tam<<"-"<<simulations<<"\n";
+    while(checktam<=tam){
+        int *vehiculos = new int[checktam];
+        //Vamos a iniciar con datos aleatorios
+        generatedata(vehiculos,checktam);
+        
+
+        while(checksimul<=simulations){
+            
+            unsigned t0,t1;
+            t0=clock();
+            simulationonhost(vehiculos,checktam,checksimul);
+            t1=clock();
+
+            double time = (double(t1-t0)/CLOCKS_PER_SEC);
+            archivo<<time<<"\n";
+            checksimul+=100000;
+        }
+        checksimul=0;
+        checktam++;
+        delete vehiculos;
+    }
 
     //Simulación en Paralelo
     /*
@@ -197,9 +214,8 @@ int main(){
 
 
     archivo.close();
-    //Free Host
-    delete vehiculos;
+    
 
-    CHECK(cudaDeviceReset());
+    //CHECK(cudaDeviceReset());
     return 0;
 }
